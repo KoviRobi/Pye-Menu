@@ -7,19 +7,26 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, Pango, PangoCairo
 
 def main():
-    parser = argparse.ArgumentParser()
-    config = configparser.ConfigParser()
-    arguments = ["Foo", "Bar", "Baz", "Quux", "What duck?"]
-    for config_file in config_files():
-        config.read(config_file)
-        config.sections()
-        break
-    win = PyeMenu(*arguments)
+    arguments = Arguments().parse_args()
+    arguments_dict = {k:v for k,v in vars(arguments).items() if v is not None}
+    config = Config().config_files()
+    menuitems = arguments.items
+    options = {}
+    profile = arguments.profile
+    for key, ty in [("width", int), ("height", int), ("rotate", int),
+                ("cancel-radius", int), ("accept-radius", int), ("alpha", str),
+                ("fg", str), ("bg", str), ("hi-fg", str), ("hi-bg", str),
+                ("cancel", str), ("hi-cancel", str), ("accept", str)]:
+        if config is not None and profile in config and key in config[profile]:
+            options[key] = ty(config[profile][key])
+        if key in arguments_dict:
+            options[key] = ty(arguments_dict[key])
+    print(options)
+    win = PyeMenu(*menuitems, **options)
     win.show_all()
     Gtk.main()
 
 class Config():
-    from configparser import ConfigParser
     def __init__(self):
         self.files = []
         self.add_env_search_path("XDG_CONFIG_HOME")
@@ -35,7 +42,7 @@ class Config():
             for path in os.getenv(env_var).split(':'):
                 self.add_env_search_path(path)
 
-    def add_search_path(self, file):
+    def add_search_path(self, path):
         self.add_search_file(os.path.join(path, 'pye-menu.ini'))
 
     def add_search_file(self, file):
@@ -47,23 +54,37 @@ class Config():
             yield file
 
     def config_files(self):
+        from configparser import ConfigParser
         config = ConfigParser()
         for file in self.config_file_names():
             config.read(file)
+            return config
 
-def config_files():
-    xdg_config_home = os.getenv("XDG_CONFIG_HOME")
-    if xdg_config_home != None:
-        path = os.path.join(xdg_config_home, "pye_menu.ini")
-        if os.path.isfile(path):
-            yield path
+class Arguments():
+    def __init__(self):
+        parser = argparse.ArgumentParser(
+            description="Uses a pie-menu to select from a list of options.")
+        parser.add_argument("items", metavar="menu-items", type=str, nargs="+")
+        parser.add_argument("--width", help="Width of the pie menu window")
+        parser.add_argument("--height", help="Height of the pie menu window")
+        parser.add_argument("--rotate", help="Rotation, in degrees, of the first item. Default of 0 means first item is to the right.")
+        parser.add_argument("--radius", help="Radius of the selection circle.")
+        parser.add_argument("--cancel-radius", help="Radius of the central no-selection circle. Should be less than radius.")
+        parser.add_argument("--accept-radius", help="Radius of the use current-selection circle, alternative to clicking on a pie-item. Should be greater than radius.")
+        parser.add_argument("--alpha", help="Alpha of the window. Default is #ffffff00 (last two hex digits are the opacity.")
+        parser.add_argument("--fg", help="Unselected foreground colour.")
+        parser.add_argument("--bg", help="Unselected background colour.")
+        parser.add_argument("--border", help="Menu-item order colour.")
+        parser.add_argument("--hi-fg", help="Selected foreground colour.")
+        parser.add_argument("--hi-bg", help="Selected background colour.")
+        parser.add_argument("--cancel", help="Unselected central null option colour.")
+        parser.add_argument("--hi-cancel", help="Selected central null option colour.")
+        parser.add_argument("--accept", help="Outer accept circle colour.")
+        parser.add_argument("--profile", default="DEFAULT", help="Section in the INI file to use.")
+        self.parser = parser
 
-    xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS")
-    xdg_config_dirs = xdg_config_dirs.split() if xdg_config_dirs != None else []
-    for path in xdg_config_dirs:
-        path = os.path.join(path, "pye_menu.ini")
-        if os.path.isfile(path):
-            yield path
+    def parse_args(self):
+        return self.parser.parse_args()
 
 if (__name__ == '__main__'):
     main()
