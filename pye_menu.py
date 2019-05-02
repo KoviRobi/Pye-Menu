@@ -116,83 +116,97 @@ class PyeMenu(Gtk.Window):
         """
         # First draw background alpha
         if self.supports_alpha:
-            context.set_source_rgba(1.0, 1.0, 1.0, 0.0)
+            context.set_source_rgba(*self.alpha)
             context.set_operator(cairo.OPERATOR_SOURCE)
         else:
-            context.set_source_rgb(1.0, 1.0, 1.0)
+            context.set_source_rgb(*self.alpha[:3])
         context.paint()
 
         # The background circle
-        context.arc(self.width/2, self.height/2,
-                    self.radius, 0, 2*pi)
-        context.set_source_rgb(1, 1, 1)
+        context.arc(self.width/2, self.height/2, self.radius, 0, 2*pi)
+        context.set_source_rgb(*self.bg)
         context.fill()
 
         # The values
-        sweep = 2*pi / len(self.items)
-        angle = -sweep/2
+        i = 0
+        angle = self.pye_offset
         for item in self.items:
-            context.save()
-            self.slice_path(context, angle, sweep)
-            if self.is_selected(angle, sweep):
-                context.set_source_rgb(0, 1, 0)
-                context.fill_preserve()
-                context.set_source_rgb(0, 0, 0)
-            else:
-                context.set_source_rgb(0, 0, 0)
-            context.clip_preserve()
-            context.stroke()
-            if self.is_selected(angle, sweep):
-                context.set_source_rgb(1, 1, 1)
-            item.add_centred_text(context, self.get_pango_context(),
-                          *self.to_cartesian(angle+sweep/2, self.radius/2))
-            context.restore()
-            angle += sweep
+            self.draw_pie(context, item, i, angle)
+            i += 1
+            angle += self.pye_arc
 
-        # Cancel circle
-        context.new_path()
-        context.arc(*self.to_cartesian(0, 0)+(self.cancel_radius, 0, 2*pi))
-        if self.selected != None:
-            context.set_source_rgb(1, 1, 1)
-        else:
-            context.set_source_rgb(1, 0, 0)
-        context.fill_preserve()
-        context.set_source_rgb(0, 0, 0)
-        context.stroke()
-
+        self.draw_cancel(context)
         # Stop propagating the draw event
         return True
 
     def do_button_release_event(self, event, user_args=None):
-        if self.selected != None:
-            sweep = 2*pi/len(self.items)
-            print(int(((self.selected+sweep/2)%(2*pi)) / sweep))
-        self.hide()
-        self.destroy()
-        Gtk.main_quit()
-
+        self.select_and_quit()
         # Stop propagating the release
         return True
 
     def do_motion_notify_event(self, event, user_args=None):
-        x, y = event.x, event.y
-        phi, r = self.to_angular(x, y)
-        if r > self.cancel_radius and r < self.radius:
-            self.selected = phi
+        phi, r = self.to_angular(event.x, event.y)
+        prev_selected = self.selected
+        if self.cancel_radius < r and r < max(self.radius, self.accept_radius):
+            angle = phi - self.pye_offset
+            angle = angle % (2*pi)
+            self.selected = int(angle // self.pye_arc)
         else:
             self.selected = None
-        self.queue_draw()
+        if prev_selected != self.selected:
+            self.queue_draw()
+        if self.radius < r:
+            self.select_and_quit()
+        # Stop propagating the motion
+        return True
 
-    def is_selected(self, angle, sweep):
-        return self.selected != None and \
-            ((self.selected-angle)%(2*pi)) <= sweep
+    def select_and_quit(self):
+        if self.selected is not None:
+            item = self.items[self.selected]
+            self.action_handler(item.action())
+        self.hide()
+        self.destroy()
+        Gtk.main_quit()
 
-    def slice_path(self, context, angle, sweep):
+    def is_selected(self, i):
+        return self.selected is not None and self.selected == i
+
+    def slice_path(self, context, r, angle):
         xmid, ymid = self.to_cartesian(0, 0)
         context.move_to(xmid, ymid)
         context.line_to(*self.to_cartesian(angle, self.radius))
-        context.arc(xmid, ymid, self.radius, angle, angle+sweep)
+        context.arc(xmid, ymid, r, angle, angle+self.pye_arc)
 
-#win = PyeMenu("Foo", "Bar", "Baz", "Quux", "What duck?")
-#win.show_all()
-#Gtk.main()
+    def draw_pie(self, context, item, i, angle):
+        context.save()
+        sel = self.is_selected(i)
+        if self.radius < self.accept_radius:
+            context.save()
+            self.slice_path(context, self.accept_radius, angle)
+            context.clip_preserve()
+            context.set_source_rgb(*self.accept)
+            context.fill_preserve()
+            context.set_source_rgb(*self.border)
+            context.stroke()
+            context.restore()
+        self.slice_path(context, self.radius, angle)
+        context.clip_preserve()
+        context.set_source_rgb(*(self.hi_bg if sel else self.bg))
+        context.fill_preserve()
+        context.set_source_rgb(*self.border)
+        context.stroke()
+        context.set_source_rgb(*(self.hi_fg if sel else self.fg))
+        item.add_centred_text(context, self.get_pango_context(),
+                              *self.to_cartesian(angle+self.pye_arc/2,
+                                                 self.radius/2))
+        context.restore()
+
+    def draw_cancel(self, context):
+        # Cancel circle
+        sel = self.selected is None
+        context.new_path()
+        context.arc(*self.to_cartesian(0, 0)+(self.cancel_radius, 0, 2*pi))
+        context.set_source_rgb(*(self.hi_cancel if sel else self.cancel))
+        context.fill_preserve()
+        context.set_source_rgb(*self.border)
+        context.stroke()
