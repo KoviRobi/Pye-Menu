@@ -15,28 +15,25 @@ class MenuItem:
     def __init__(self, label, action=None):
         self.label = label
         self._layout = None
-
-    def layout(self, pango_context):
-        if self._layout == None:
-            self._layout = Pango.Layout(pango_context)
-            self._layout.set_font_description(font_cache["sans-serif 12"])
-            self._layout.set_markup(self.label)
-        return self._layout
+        self.action = action or self.get_index
 
     def set_label(self, label):
-        if self._layout != None:
-            del self._layout
         self.label = label
+
+    def set_index(self, index):
+        self.index = index
+
+    def get_index(self):
+        return self.index
 
     def add_centred_text(self, cairo, pango, x, y):
         # Text
-        layout = self.layout(pango)
+        layout = Pango.Layout(pango)
+        layout.set_font_description(font_cache["sans-serif 12"])
+        layout.set_markup(self.label)
         w,h = layout.get_pixel_size()
         cairo.move_to(x-w/2, y-h/2)
         PangoCairo.show_layout(cairo, layout)
-
-    def act(self):
-        TODO
 
 class PyeMenu(Gtk.Window):
     def __init__(self, *args, **kwargs):
