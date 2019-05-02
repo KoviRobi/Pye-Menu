@@ -36,21 +36,25 @@ class MenuItem:
         PangoCairo.show_layout(cairo, layout)
 
 class PyeMenu(Gtk.Window):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args,
+                 action_handler = (lambda v: print(v) if v is not None else v),
+                 width = 500, height = 500, rotate = 0,
+                 radius = 200, cancel_radius = 20, accept_radius = 250,
+                 alpha = "#ffffff00", fg = "#657b83", bg = "#fdf6e3",
+                 border="#657b83", hi_fg = "#22aa22", hi_bg = "#cceecc",
+                 cancel = "#fdf6e3", hi_cancel = "#aa2222", accept = "#eee8d5"):
         super().__init__()
+        keyword_args = {k:v for k,v in locals().items() if k not in ['self', 'args']}
+        self.__dict__.update(keyword_args)
+        self.canonicalize_colors()
 
         self.connect("delete-event", Gtk.main_quit)
         self.connect("destroy", Gtk.main_quit)
 
-        self.width = int(kwargs.get("width", 400))
-        self.height = int(kwargs.get("height", 400))
-        self.radius = int(kwargs.get("radius", 200))
-        self.cancel_radius = int(kwargs.get("radius", 20))
         self.items = []
         self.selected = None
-
         for arg in args:
-            self.items.append(arg if type(arg)==MenuItem else MenuItem(arg))
+            self.add_item(arg)
 
         self.set_size_request(self.width, self.height)
         self.set_position(Gtk.WindowPosition.MOUSE)
@@ -66,6 +70,23 @@ class PyeMenu(Gtk.Window):
             Gdk.EventMask.BUTTON_RELEASE_MASK |
             Gdk.EventMask.POINTER_MOTION_MASK)
         self.do_screen_changed(None, None)
+
+    def add_item(self, name_or_MenuItem):
+        item = name_or_MenuItem
+        if not isinstance(item, MenuItem):
+            item = MenuItem(item)
+        item.set_index(len(self.items))
+        self.items.append(item)
+        self.pye_arc = 2*pi / len(self.items)
+        self.pye_offset = float(self.rotate)*pi/180-self.pye_arc/2
+
+    def canonicalize_colors(self):
+        for col in "fg bg border hi_fg hi_bg cancel hi_cancel accept".split(" "):
+            c = self.__dict__[col]
+            if type(c) == str:
+                c1 = ( (int(c[a:a+2], base=16)/255) for a in [1, 3, 5])
+                self.__dict__[col] = tuple(c1)
+        self.alpha = tuple( (int(self.alpha[a:a+2], base=16)/255) for a in [1, 3, 5, 7])
 
     def to_cartesian(self, phi, r):
         """Gives the cartesian coordinate for the passed in angular ones
