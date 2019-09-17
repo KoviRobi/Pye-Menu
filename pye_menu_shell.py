@@ -21,7 +21,6 @@ def main():
             options[key] = ty(config[profile][key])
         if key in arguments_dict:
             options[key] = ty(arguments_dict[key])
-    print(options)
     win = PyeMenu(*menuitems, **options)
     win.show_all()
     Gtk.main()
