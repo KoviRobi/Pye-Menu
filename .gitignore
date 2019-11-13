@@ -2,6 +2,13 @@
 *.~
 \#*\#
 
+# direnv files
+.direnv
+
+# Results of nix-build
+result
+result-*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
