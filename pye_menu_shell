@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from pye_menu import PyeMenu
+from pye_menu import PyeMenu, MenuItem
 import configparser
 import argparse
 import os
@@ -11,7 +11,15 @@ def main():
     arguments = Arguments().parse_args()
     arguments_dict = {k:v for k,v in vars(arguments).items() if v is not None}
     config = Config().config_files()
-    menuitems = arguments.items
+    items = []
+    for item in arguments.items:
+        if ":" in item:
+            sel, label = item.split(":", maxsplit=1)
+            items.append(MenuItem(label,
+                # The dummy parameter s=sel is to caputre sel
+                action=lambda self,s=sel: print(s)))
+        else:
+            items.append(MenuItem(item))
     options = {}
     profile = arguments.profile
     for key, ty in [("width", int), ("height", int), ("rotate", int),
@@ -22,7 +30,7 @@ def main():
             options[key] = ty(config[profile][key])
         if key in arguments_dict:
             options[key] = ty(arguments_dict[key])
-    win = PyeMenu(*menuitems, **options)
+    win = PyeMenu(*items, **options)
     win.show_all()
     Gtk.main()
 
