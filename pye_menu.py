@@ -39,7 +39,7 @@ class PyeMenu(Gtk.Window):
     def __init__(self, *args,
                  action_handler = (lambda v: print(v) if v is not None else v),
                  width = 500, height = 500, rotate = 0,
-                 radius = 200, cancel_radius = 20, accept_radius = 250,
+                 radius = 200, cancel_radius = 50, accept_radius = 250,
                  alpha = "#ffffff00", fg = "#657b83", bg = "#fdf6e3",
                  border="#657b83", hi_fg = "#22aa22", hi_bg = "#cceecc",
                  cancel = "#fdf6e3", hi_cancel = "#aa2222", accept = "#eee8d5"):

@@ -69,7 +69,7 @@ class Arguments():
         parser.add_argument("--height", help="Height of the pie menu window")
         parser.add_argument("--rotate", help="Rotation, in degrees, of the first item. Default of 0 means first item is to the right.")
         parser.add_argument("--radius", help="Radius of the selection circle. Default is 200.")
-        parser.add_argument("--cancel-radius", help="Radius of the central no-selection circle. Should be less than radius. Default is 20.")
+        parser.add_argument("--cancel-radius", help="Radius of the central no-selection circle. Should be less than radius. Default is 50.")
         parser.add_argument("--accept-radius", help="Radius of the use current-selection circle, alternative to clicking on a pie-item. Should be greater than radius. Default is 250.")
         parser.add_argument("--alpha", help="Alpha of the window. Default is #ffffff00 (last two hex digits are the opacity.")
         parser.add_argument("--fg", help="Unselected foreground colour.")
