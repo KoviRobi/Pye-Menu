@@ -2,6 +2,7 @@ from math import pi, sin, cos, atan2, sqrt
 from collections import defaultdict
 import cairo
 import gi
+import subprocess # For ExecMenuItem
 gi.require_versions({'Gtk': '3.0', 'PangoCairo': '1.0'})
 from gi.repository import Gtk, Gdk, Pango, PangoCairo
 
@@ -15,10 +16,13 @@ class MenuItem:
     def __init__(self, label, action=None):
         self.label = label
         self._layout = None
-        self.action = action or self.get_index
+        self.action = action or MenuItem.get_label
 
     def set_label(self, label):
         self.label = label
+
+    def get_label(self):
+        return self.label
 
     def set_index(self, index):
         self.index = index
@@ -35,11 +39,32 @@ class MenuItem:
         cairo.move_to(x-w/2, y-h/2)
         PangoCairo.show_layout(cairo, layout)
 
+class ExecMenuItem(MenuItem):
+    """Executes a command (by default shell=False), when this menu
+    item is selected. Use shlex.quote() to escape strings! Returns
+    a subprocess.CompletedProcess instance, or the raised exception.
+    Example use
+        ExecMenuItem("Power off", ["systemctl", "poweroff"])
+    """
+    def __init__(self, label, command, shell=False):
+        super().__init__(label, action=ExecMenuItem.exec_command)
+        self.command = command
+        self.shell = shell
+    def exec_command(self):
+        try:
+            return subprocess.run(self.command, self.shell)
+        except Exception as e:
+            return e
+
+
 class PyeMenu(Gtk.Window):
+    """Creates a pie menu, with items going from top clockwise (by
+    default, because rotate is -90 by default)
+    """
     def __init__(self, *args,
-                 action_handler = (lambda v: print(v) if v is not None else v),
-                 width = 500, height = 500, rotate = 0,
-                 radius = 200, cancel_radius = 50, accept_radius = 250,
+                 action_handler = None, # default_action_handler
+                 width = None, height = None, rotate = -90,
+                 radius = 200, cancel_radius = 50, accept_radius = None,
                  alpha = "#ffffff00", fg = "#657b83", bg = "#fdf6e3",
                  border="#657b83", hi_fg = "#22aa22", hi_bg = "#cceecc",
                  cancel = "#fdf6e3", hi_cancel = "#aa2222", accept = "#eee8d5"):
@@ -47,6 +72,14 @@ class PyeMenu(Gtk.Window):
         keyword_args = {k:v for k,v in locals().items() if k not in ['self', 'args']}
         self.__dict__.update(keyword_args)
         self.canonicalize_colors()
+        if self.action_handler is None:
+            self.action_handler = PyeMenu.default_action_handler
+        if self.accept_radius is None:
+            self.accept_radius = self.radius + 50
+        if self.width is None:
+            self.width = 2*max(self.radius, self.accept_radius)
+        if self.height is None:
+            self.height = 2*max(self.radius, self.accept_radius)
 
         self.connect("delete-event", Gtk.main_quit)
         self.connect("destroy", Gtk.main_quit)
@@ -176,7 +209,13 @@ class PyeMenu(Gtk.Window):
     def select_and_quit(self):
         if self.selected is not None:
             item = self.items[self.selected]
-            self.action_handler(item.action())
+            self.action_handler(self, item.action(item))
+        else:
+            self.action_handler(self, None)
+
+    def default_action_handler(self, value):
+        if value is not None:
+            print(value)
         self.hide()
         self.destroy()
         Gtk.main_quit()
@@ -223,3 +262,79 @@ class PyeMenu(Gtk.Window):
         context.fill_preserve()
         context.set_source_rgb(*self.border)
         context.stroke()
+
+class TopMenu(PyeMenu):
+    """Used for the top menu in a multi-menu instance, e.g. in
+          TopMenu(
+            MenuItem("Foo", action=SubMenu(
+                MenuItem("Bar"),
+                MenuItem("Baz"))),
+            MenuItem("Quux"))
+
+       Has a convenience wrapper method 'main(self)' to replace
+          win = TopMenu(
+                  MenuItem("Foo", action=SubMenu(
+                      MenuItem("Bar"),
+                      MenuItem("Baz"))),
+                  MenuItem("Quux"))
+          win.show_all()
+          Gtk.main()
+       with
+          TopMenu(
+            MenuItem("Foo", action=SubMenu(
+                MenuItem("Bar"),
+                MenuItem("Baz"))),
+            MenuItem("Quux")).main()
+    """
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("action_handler", TopMenu.action_handler)
+        super().__init__(*args, **kwargs)
+
+    def main(self):
+        self.show_all()
+        Gtk.main()
+
+    def action_handler(self, value):
+        if isinstance(value, SubMenu):
+            self.selected = None
+        else:
+            if value is not None:
+                print(value)
+            self.hide()
+            self.destroy()
+            Gtk.main_quit()
+
+class SubMenu(PyeMenu):
+    """Used for any of the sub menus in a multi-menu instance, e.g. in
+          TopMenu(
+            MenuItem("Foo", action=SubMenu(
+                MenuItem("Bar"),
+                MenuItem("Baz"))),
+            MenuItem("Quux"))
+
+       Differs from TopMenu in that if you cancel it, it doesn't quit
+       but goes back to the previous menu.
+    """
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("action_handler", SubMenu.action_handler)
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, value):
+        self.set_position(Gtk.WindowPosition.MOUSE)
+        self.show_all()
+        return self # Don't quit
+
+    def action_handler(self, value):
+        if isinstance(value, SubMenu):
+            self.selected = None
+        else:
+            if value is not None:
+                print(value)
+            self.hide()
+            if value is not None: # Not cancelling submenu
+                self.destroy()
+                Gtk.main_quit()
+class SubMenuItem(MenuItem):
+    """Wrapper for MenuItem(label, action=SubMenu(items))"""
+    def __init__(self, label, *items, **opts):
+        super().__init__(label, action=SubMenu(*items, **opts))
