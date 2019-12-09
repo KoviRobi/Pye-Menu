@@ -15,8 +15,8 @@ def main():
     options = {}
     profile = arguments.profile
     for key, ty in [("width", int), ("height", int), ("rotate", int),
-                ("cancel-radius", int), ("accept-radius", int), ("alpha", str),
-                ("fg", str), ("bg", str), ("hi-fg", str), ("hi-bg", str),
+                ("cancel_radius", int), ("accept_radius", int), ("alpha", str),
+                ("fg", str), ("bg", str), ("hi_fg", str), ("hi_bg", str),
                 ("cancel", str), ("hi-cancel", str), ("accept", str)]:
         if config is not None and profile in config and key in config[profile]:
             options[key] = ty(config[profile][key])
@@ -68,9 +68,9 @@ class Arguments():
         parser.add_argument("--width", help="Width of the pie menu window")
         parser.add_argument("--height", help="Height of the pie menu window")
         parser.add_argument("--rotate", help="Rotation, in degrees, of the first item. Default of 0 means first item is to the right.")
-        parser.add_argument("--radius", help="Radius of the selection circle.")
-        parser.add_argument("--cancel-radius", help="Radius of the central no-selection circle. Should be less than radius.")
-        parser.add_argument("--accept-radius", help="Radius of the use current-selection circle, alternative to clicking on a pie-item. Should be greater than radius.")
+        parser.add_argument("--radius", help="Radius of the selection circle. Default is 200.")
+        parser.add_argument("--cancel-radius", help="Radius of the central no-selection circle. Should be less than radius. Default is 20.")
+        parser.add_argument("--accept-radius", help="Radius of the use current-selection circle, alternative to clicking on a pie-item. Should be greater than radius. Default is 250.")
         parser.add_argument("--alpha", help="Alpha of the window. Default is #ffffff00 (last two hex digits are the opacity.")
         parser.add_argument("--fg", help="Unselected foreground colour.")
         parser.add_argument("--bg", help="Unselected background colour.")
