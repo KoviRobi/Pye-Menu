@@ -81,7 +81,7 @@ class PyeMenu(Gtk.Window):
         self.pye_offset = float(self.rotate)*pi/180-self.pye_arc/2
 
     def canonicalize_colors(self):
-        for col in "fg bg border hi_fg hi_bg cancel hi_cancel accept".split(" "):
+        for col in ["fg", "bg", "border", "hi_fg", "hi_bg", "cancel", "hi_cancel", "accept"]:
             c = self.__dict__[col]
             if type(c) == str:
                 c1 = ( (int(c[a:a+2], base=16)/255) for a in [1, 3, 5])
@@ -147,18 +147,31 @@ class PyeMenu(Gtk.Window):
     def do_motion_notify_event(self, event, user_args=None):
         phi, r = self.to_angular(event.x, event.y)
         prev_selected = self.selected
-        if self.cancel_radius < r and r < max(self.radius, self.accept_radius):
-            angle = phi - self.pye_offset
-            angle = angle % (2*pi)
-            self.selected = int(angle // self.pye_arc)
-        else:
-            self.selected = None
+        self.compute_selected(phi, r)
         if prev_selected != self.selected:
             self.queue_draw()
-        if self.radius < r:
+        if self.radius < r and r < self.accept_radius and \
+                self.selected is not None:
             self.select_and_quit()
         # Stop propagating the motion
         return True
+
+    def compute_selected(self, phi, r):
+        if self.cancel_radius < r and r < max(self.radius, self.accept_radius):
+            if r < self.radius:
+                angle = phi - self.pye_offset
+                angle = angle % (2*pi)
+                self.selected = int(angle // self.pye_arc)
+            # Else if radius < r < accept-radius, don't change
+            # selected. We shouldn't set it to an int, because if the
+            # user is coming from the outside (e.g. when the menu is
+            # started close to the edge), then we shouldn't select and
+            # accept, but give the user a chance to go into the
+            # selection area and select something else. We don't want
+            # to set it to None, as that would erase the user's
+            # previous selection when using the accept ring.
+        else:
+            self.selected = None
 
     def select_and_quit(self):
         if self.selected is not None:
