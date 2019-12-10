@@ -1,8 +1,9 @@
 let nixpkgs = import <nixpkgs> {};
 in
 { python3 ? nixpkgs.python3,
-  gtk3-x11 ? nixpkgs.gtk3-x11,
-  gobjectIntrospection ? nixpkgs.gobjectIntrospection,
+  gtk3 ? nixpkgs.gtk3,
+  gobject-introspection ? nixpkgs.gobject-introspection,
+  wrapGAppsHook ? nixpkgs.wrapGAppsHook,
   lib ? nixpkgs.lib 
 }:
 python3.pkgs.buildPythonPackage rec {
@@ -10,7 +11,11 @@ python3.pkgs.buildPythonPackage rec {
   version = "1.0";
   src = ./.;
   propagatedBuildInputs = with python3.pkgs; [ pygobject3 pycairo ];
-  buildInputs = [ gtk3-x11 gobjectIntrospection ];
+  nativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
+  buildInputs = [ gtk3 ];
+
+  dontWrapGApps = true;
+  makeWrapperArgs = [ "\${gappsWrapperArgs[@]}" ];
 
   meta = with lib; {
     description = "Python library and application for makig pie menus";
