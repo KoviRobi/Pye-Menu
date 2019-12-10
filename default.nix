@@ -14,6 +14,9 @@ python3.pkgs.buildPythonPackage rec {
   nativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
   buildInputs = [ gtk3 ];
 
+  GST_PLUGIN_SYSTEM_PATH_1_0 = ''""'';
+  GRL_PLUGIN_PATH = ''""'';
+
   dontWrapGApps = true;
   makeWrapperArgs = [ "\${gappsWrapperArgs[@]}" ];
 
