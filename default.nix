@@ -17,6 +17,8 @@ python3.pkgs.buildPythonPackage rec {
   GST_PLUGIN_SYSTEM_PATH_1_0 = ''""'';
   GRL_PLUGIN_PATH = ''""'';
 
+  strictDeps = false;
+
   dontWrapGApps = true;
   makeWrapperArgs = [ "\${gappsWrapperArgs[@]}" ];
 
