@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# This is an example use of PyeMenu, roughly what I use with my wacom pen
+# This is an example use of PyeMenu, roughly what I use with my touchscreen pen
 from pye_menu import TopMenu, SubMenu, MenuItem, SubMenuItem, ExecMenuItem
 import subprocess
 
@@ -23,10 +23,10 @@ if __name__ == '__main__':
           SubMenuItem("Actions",
               ExecMenuItem("Screenshot", ["scrot"]),
               SubMenuItem("Rotate",
-                  MenuItem("Normal"),
-                  MenuItem("Right"),
-                  MenuItem("Inverted"),
-                  MenuItem("Left"),
+                  ExecMenuItem("Normal", ["rotate", "normal"]),
+                  ExecMenuItem("Right", ["rotate", "right"]),
+                  ExecMenuItem("Inverted", ["rotate", "inverted"]),
+                  ExecMenuItem("Left", ["rotate", "left"]),
                   radius=300),
               ExecMenuItem("Lock", ["loginctl", "lock-session"]),
               ExecMenuItem("Quit", ["i3-msg", "quit"]),
