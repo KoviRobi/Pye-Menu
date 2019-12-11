@@ -11,7 +11,7 @@ python3.pkgs.buildPythonPackage rec {
   version = "1.0";
   src = ./src;
   propagatedBuildInputs = with python3.pkgs; [ pygobject3 pycairo ];
-  nativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
+  propagatedNativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
   buildInputs = [ gtk3 ];
 
   strictDeps = false;
