@@ -14,13 +14,11 @@ python3.pkgs.buildPythonPackage rec {
   nativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
   buildInputs = [ gtk3 ];
 
-  GST_PLUGIN_SYSTEM_PATH_1_0 = ''""'';
-  GRL_PLUGIN_PATH = ''""'';
-
   strictDeps = false;
 
-  dontWrapGApps = true;
-  makeWrapperArgs = [ "\${gappsWrapperArgs[@]}" ];
+  preFixup = ''
+    makeWrapperArgs+=("''${gappsWrapperArgs[@]}")
+  '';
 
   meta = with lib; {
     description = "Python library and application for makig pie menus";
