@@ -10,9 +10,9 @@ python3.pkgs.buildPythonPackage rec {
   pname = "pye-menu";
   version = "1.0";
   src = ./src;
-  propagatedBuildInputs = with python3.pkgs; [ pygobject3 pycairo ];
+  propagatedBuildInputs = [ gtk3 ] ++
+    (with python3.pkgs; [ pygobject3 pycairo ]);
   propagatedNativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
-  buildInputs = [ gtk3 ];
 
   strictDeps = false;
 
