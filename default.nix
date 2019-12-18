@@ -1,17 +1,16 @@
-let nixpkgs = import <nixpkgs> {};
-in
-{ python3 ? nixpkgs.python3
-, gtk3 ? nixpkgs.gtk3
-, gobject-introspection ? nixpkgs.gobject-introspection
-, wrapGAppsHook ? nixpkgs.wrapGAppsHook
-, lib ? nixpkgs.lib
+{ lib
+, python
+, pygobject3
+, pycairo
+, gtk3
+, gobject-introspection
+, wrapGAppsHook
 }:
-python3.pkgs.buildPythonPackage rec {
+python.pkgs.buildPythonPackage rec {
   pname = "pye-menu";
   version = "1.0";
   src = ./src;
-  propagatedBuildInputs = [ gtk3 ] ++
-    (with python3.pkgs; [ pygobject3 pycairo ]);
+  propagatedBuildInputs = [ gtk3 pygobject3 pycairo ];
   propagatedNativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
 
   strictDeps = false;
