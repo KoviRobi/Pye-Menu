@@ -5,7 +5,7 @@ from math import atan2, cos, pi, sin, sqrt
 import cairo
 import gi
 
-gi.require_versions({"Gtk": "3.0", "PangoCairo": "1.0"})
+gi.require_versions({"Gtk": "3.0", "Gdk": "3.0", "PangoCairo": "1.0"})
 from gi.repository import Gdk, Gtk, Pango, PangoCairo
 
 
@@ -167,7 +167,7 @@ class PyeMenu(Gtk.Window):
         ones (cartesian is centered top-left, angular at the middle)
         """
         x, y = x - self.width / 2, y - self.height / 2
-        return (atan2(y, x) % (2 * pi), sqrt(x ** 2 + y ** 2))
+        return (atan2(y, x) % (2 * pi), sqrt(x**2 + y**2))
 
     def do_screen_changed(self, old_screen, user_args=None):
         """This ensures we use the right 'visual' which is stuff like the

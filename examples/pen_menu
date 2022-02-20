@@ -1,37 +1,35 @@
 #!/usr/bin/env python3
 # This is an example use of PyeMenu, roughly what I use with my touchscreen pen
-from pye_menu import TopMenu, SubMenu, MenuItem, SubMenuItem, ExecMenuItem
+from pye_menu import TopMenu, SubMenuItem, ExecMenuItem
 import subprocess
 
 if __name__ == '__main__':
-    subprocess.run(["i3-msg", "--", "mark", "--add", "previous"],
-            stdout=subprocess.DEVNULL)
+    subprocess.run(["@i3msg@", "--", "mark", "--add", "previous"],
+                   stdout=subprocess.DEVNULL)
     try:
         TopMenu(
-          ExecMenuItem("Close", ["i3-msg", "[con_mark=previous]", "kill"]),
-          ExecMenuItem("Fullscreen", ["i3-msg", "[con_mark=previous]",
-              "fullscreen", "toggle"]),
-          ExecMenuItem("Float", ["i3-msg", "[con_mark=previous]",
-              "floating", "toggle"]),
-          SubMenuItem("Music",
-              ExecMenuItem("⏯️", ["mpc", "toggle"]),
-              ExecMenuItem("1", ["mpc", "single"]),
-              ExecMenuItem("⏭", ["mpc", "next"]),
-              ExecMenuItem("⏹", ["mpc", "stop"]),
-              ExecMenuItem("⏮", ["mpc", "prev"]),
-              ExecMenuItem("🔁️", ["mpc", "loop"])),
-          SubMenuItem("Actions",
-              ExecMenuItem("Screenshot", ["scrot"]),
-              SubMenuItem("Rotate",
-                  ExecMenuItem("Normal", ["rotate", "normal"]),
-                  ExecMenuItem("Right", ["rotate", "right"]),
-                  ExecMenuItem("Inverted", ["rotate", "inverted"]),
-                  ExecMenuItem("Left", ["rotate", "left"]),
-                  radius=300),
-              ExecMenuItem("Lock", ["loginctl", "lock-session"]),
-              ExecMenuItem("Quit", ["i3-msg", "quit"]),
-              radius=300),
-          radius=400).main()
+            ExecMenuItem("Close", ["@i3msg@", "[con_mark=previous]", "kill"]),
+            ExecMenuItem("Fullscreen", ["@i3msg@", "[con_mark=previous]",
+                                        "fullscreen", "toggle"]),
+            ExecMenuItem("Float", ["@i3msg@", "[con_mark=previous]",
+                                   "floating", "toggle"]),
+            SubMenuItem("Music",
+                        ExecMenuItem("⏯️", ["@mpc@", "toggle"]),
+                        ExecMenuItem("1", ["@mpc@", "single"]),
+                        ExecMenuItem("⏭", ["@mpc@", "next"]),
+                        ExecMenuItem("⏹", ["@mpc@", "stop"]),
+                        ExecMenuItem("⏮", ["@mpc@", "prev"]),
+                        ExecMenuItem("🔁️", ["@mpc@", "loop"])),
+            SubMenuItem("Actions",
+                        SubMenuItem("Screenshot",
+                                    ExecMenuItem("Screen", ["@flameshot@", "screen"]),
+                                    ExecMenuItem("Full", ["@flameshot@", "full"]),
+                                    ExecMenuItem("Select", ["@flameshot@", "gui"]),
+                                    radius=300),
+                        ExecMenuItem("Lock", ["@loginctl@", "lock-session"]),
+                        ExecMenuItem("Quit", ["@i3msg@", "quit"]),
+                        radius=300),
+            radius=400).main()
     finally:
-        subprocess.run(["i3-msg", "--", "unmark", "previous"],
-                stdout=subprocess.DEVNULL)
+        subprocess.run(["@i3msg@", "--", "unmark", "previous"],
+                       stdout=subprocess.DEVNULL)

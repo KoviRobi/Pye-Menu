@@ -1,27 +1,7 @@
-{ lib
-, python
-, pygobject3
-, pycairo
-, gtk3
-, gobject-introspection
-, wrapGAppsHook
-}:
-python.pkgs.buildPythonPackage rec {
-  pname = "pye-menu";
-  version = "1.0";
-  src = ./src;
-  propagatedBuildInputs = [ gtk3 pygobject3 pycairo ];
-  propagatedNativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
-
-  strictDeps = false;
-
-  preFixup = ''
-    makeWrapperArgs+=("''${gappsWrapperArgs[@]}")
-  '';
-
-  meta = with lib; {
-    description = "Python library and application for makig pie menus";
-    license = licenses.mit;
-    maintainers = with maintainers; [ kovirobi ];
-  };
-}
+(import (
+  fetchTarball {
+    url = "https://github.com/edolstra/flake-compat/archive/99f1c2157fba4bfe6211a321fd0ee43199025dbf.tar.gz";
+    sha256 = "0x2jn3vrawwv9xp15674wjz9pixwjyj3j771izayl962zziivbx2"; }
+) {
+  src =  ./.;
+}).defaultNix
