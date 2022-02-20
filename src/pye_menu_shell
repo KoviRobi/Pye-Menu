@@ -1,31 +1,50 @@
 #!/usr/bin/env python3
-from pye_menu import PyeMenu, MenuItem
-import configparser
 import argparse
+import configparser
 import os
+
 import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, Pango, PangoCairo
+
+from pye_menu import MenuItem, PyeMenu
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gdk, Gtk, Pango, PangoCairo
+
 
 def main():
     arguments = Arguments().parse_args()
-    arguments_dict = {k:v for k,v in vars(arguments).items() if v is not None}
+    arguments_dict = {k: v for k, v in vars(arguments).items() if v is not None}
     config = Config().config_files()
     items = []
     for item in arguments.items:
         if ":" in item:
             sel, label = item.split(":", maxsplit=1)
-            items.append(MenuItem(label,
-                # The dummy parameter s=sel is to caputre sel
-                action=lambda self,s=sel: print(s)))
+            items.append(
+                MenuItem(
+                    label,
+                    # The dummy parameter s=sel is to caputre sel
+                    action=lambda self, s=sel: print(s),
+                )
+            )
         else:
             items.append(MenuItem(item))
     options = {}
     profile = arguments.profile
-    for key, ty in [("width", int), ("height", int), ("rotate", int),
-                ("cancel_radius", int), ("accept_radius", int), ("alpha", str),
-                ("fg", str), ("bg", str), ("hi_fg", str), ("hi_bg", str),
-                ("cancel", str), ("hi-cancel", str), ("accept", str)]:
+    for key, ty in [
+        ("width", int),
+        ("height", int),
+        ("rotate", int),
+        ("cancel_radius", int),
+        ("accept_radius", int),
+        ("alpha", str),
+        ("fg", str),
+        ("bg", str),
+        ("hi_fg", str),
+        ("hi_bg", str),
+        ("cancel", str),
+        ("hi-cancel", str),
+        ("accept", str),
+    ]:
         if config is not None and profile in config and key in config[profile]:
             options[key] = ty(config[profile][key])
         if key in arguments_dict:
@@ -34,7 +53,8 @@ def main():
     win.show_all()
     Gtk.main()
 
-class Config():
+
+class Config:
     def __init__(self):
         self.files = []
         self.add_env_search_path("XDG_CONFIG_HOME")
@@ -45,13 +65,13 @@ class Config():
         if env_var in os.environ:
             self.add_search_path(os.path.join(os.getenv(env_var), *path))
 
-    def add_env_search_paths(self, env_var, separator=':'):
+    def add_env_search_paths(self, env_var, separator=":"):
         if env_var in os.environ:
-            for path in os.getenv(env_var).split(':'):
+            for path in os.getenv(env_var).split(":"):
                 self.add_env_search_path(path)
 
     def add_search_path(self, path):
-        self.add_search_file(os.path.join(path, 'pye-menu.ini'))
+        self.add_search_file(os.path.join(path, "pye-menu.ini"))
 
     def add_search_file(self, file):
         if os.path.exists(file):
@@ -63,23 +83,40 @@ class Config():
 
     def config_files(self):
         from configparser import ConfigParser
+
         config = ConfigParser()
         for file in self.config_file_names():
             config.read(file)
             return config
 
-class Arguments():
+
+class Arguments:
     def __init__(self):
         parser = argparse.ArgumentParser(
-            description="Uses a pie-menu to select from a list of options.")
+            description="Uses a pie-menu to select from a list of options."
+        )
         parser.add_argument("items", metavar="menu-items", type=str, nargs="+")
         parser.add_argument("--width", help="Width of the pie menu window")
         parser.add_argument("--height", help="Height of the pie menu window")
-        parser.add_argument("--rotate", help="Rotation, in degrees, of the first item. Default of 0 means first item is to the right.")
-        parser.add_argument("--radius", help="Radius of the selection circle. Default is 200.")
-        parser.add_argument("--cancel-radius", help="Radius of the central no-selection circle. Should be less than radius. Default is 50.")
-        parser.add_argument("--accept-radius", help="Radius of the use current-selection circle, alternative to clicking on a pie-item. Should be greater than radius. Default is radius + 50.")
-        parser.add_argument("--alpha", help="Alpha of the window. Default is #ffffff00 (last two hex digits are the opacity.")
+        parser.add_argument(
+            "--rotate",
+            help="Rotation, in degrees, of the first item. Default of 0 means first item is to the right.",
+        )
+        parser.add_argument(
+            "--radius", help="Radius of the selection circle. Default is 200."
+        )
+        parser.add_argument(
+            "--cancel-radius",
+            help="Radius of the central no-selection circle. Should be less than radius. Default is 50.",
+        )
+        parser.add_argument(
+            "--accept-radius",
+            help="Radius of the use current-selection circle, alternative to clicking on a pie-item. Should be greater than radius. Default is radius + 50.",
+        )
+        parser.add_argument(
+            "--alpha",
+            help="Alpha of the window. Default is #ffffff00 (last two hex digits are the opacity.",
+        )
         parser.add_argument("--fg", help="Unselected foreground colour.")
         parser.add_argument("--bg", help="Unselected background colour.")
         parser.add_argument("--border", help="Menu-item order colour.")
@@ -88,13 +125,16 @@ class Arguments():
         parser.add_argument("--cancel", help="Unselected central null option colour.")
         parser.add_argument("--hi-cancel", help="Selected central null option colour.")
         parser.add_argument("--accept", help="Outer accept circle colour.")
-        parser.add_argument("--profile", default="DEFAULT", help="Section in the INI file to use.")
+        parser.add_argument(
+            "--profile", default="DEFAULT", help="Section in the INI file to use."
+        )
         self.parser = parser
 
     def parse_args(self):
         return self.parser.parse_args()
 
-if (__name__ == '__main__'):
+
+if __name__ == "__main__":
     main()
 else:
     print("This is not a library, but a command-line program for the pye_menu")

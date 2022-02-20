@@ -1,16 +1,22 @@
-from math import pi, sin, cos, atan2, sqrt
+import subprocess  # For ExecMenuItem
 from collections import defaultdict
+from math import atan2, cos, pi, sin, sqrt
+
 import cairo
 import gi
-import subprocess # For ExecMenuItem
-gi.require_versions({'Gtk': '3.0', 'PangoCairo': '1.0'})
-from gi.repository import Gtk, Gdk, Pango, PangoCairo
+
+gi.require_versions({"Gtk": "3.0", "PangoCairo": "1.0"})
+from gi.repository import Gdk, Gtk, Pango, PangoCairo
+
 
 class FontCache(dict):
     def __missing__(self, key):
         self[key] = Pango.FontDescription.from_string(key)
         return self[key]
+
+
 font_cache = FontCache()
+
 
 class MenuItem:
     def __init__(self, label, action=None):
@@ -35,9 +41,10 @@ class MenuItem:
         layout = Pango.Layout(pango)
         layout.set_font_description(font_cache["sans-serif 12"])
         layout.set_markup(self.label)
-        w,h = layout.get_pixel_size()
-        cairo.move_to(x-w/2, y-h/2)
+        w, h = layout.get_pixel_size()
+        cairo.move_to(x - w / 2, y - h / 2)
         PangoCairo.show_layout(cairo, layout)
+
 
 class ExecMenuItem(MenuItem):
     """Executes a command (by default shell=False), when this menu
@@ -46,10 +53,12 @@ class ExecMenuItem(MenuItem):
     Example use
         ExecMenuItem("Power off", ["systemctl", "poweroff"])
     """
+
     def __init__(self, label, command, shell=False):
         super().__init__(label, action=ExecMenuItem.exec_command)
         self.command = command
         self.shell = shell
+
     def exec_command(self):
         try:
             return subprocess.run(self.command, self.shell)
@@ -61,15 +70,29 @@ class PyeMenu(Gtk.Window):
     """Creates a pie menu, with items going from top clockwise (by
     default, because rotate is -90 by default)
     """
-    def __init__(self, *args,
-                 action_handler = None, # default_action_handler
-                 width = None, height = None, rotate = -90,
-                 radius = 200, cancel_radius = 50, accept_radius = None,
-                 alpha = "#ffffff00", fg = "#657b83", bg = "#fdf6e3",
-                 border="#657b83", hi_fg = "#22aa22", hi_bg = "#cceecc",
-                 cancel = "#fdf6e3", hi_cancel = "#aa2222", accept = "#eee8d5"):
+
+    def __init__(
+        self,
+        *args,
+        action_handler=None,  # default_action_handler
+        width=None,
+        height=None,
+        rotate=-90,
+        radius=200,
+        cancel_radius=50,
+        accept_radius=None,
+        alpha="#ffffff00",
+        fg="#657b83",
+        bg="#fdf6e3",
+        border="#657b83",
+        hi_fg="#22aa22",
+        hi_bg="#cceecc",
+        cancel="#fdf6e3",
+        hi_cancel="#aa2222",
+        accept="#eee8d5"
+    ):
         super().__init__()
-        keyword_args = {k:v for k,v in locals().items() if k not in ['self', 'args']}
+        keyword_args = {k: v for k, v in locals().items() if k not in ["self", "args"]}
         self.__dict__.update(keyword_args)
         self.canonicalize_colors()
         if self.action_handler is None:
@@ -77,9 +100,9 @@ class PyeMenu(Gtk.Window):
         if self.accept_radius is None:
             self.accept_radius = self.radius + 50
         if self.width is None:
-            self.width = 2*max(self.radius, self.accept_radius)
+            self.width = 2 * max(self.radius, self.accept_radius)
         if self.height is None:
-            self.height = 2*max(self.radius, self.accept_radius)
+            self.height = 2 * max(self.radius, self.accept_radius)
 
         self.connect("delete-event", Gtk.main_quit)
         self.connect("destroy", Gtk.main_quit)
@@ -99,9 +122,10 @@ class PyeMenu(Gtk.Window):
         self.set_wmclass("pye-menu", "pye-menu")
 
         self.add_events(
-            Gdk.EventMask.BUTTON_PRESS_MASK |
-            Gdk.EventMask.BUTTON_RELEASE_MASK |
-            Gdk.EventMask.POINTER_MOTION_MASK)
+            Gdk.EventMask.BUTTON_PRESS_MASK
+            | Gdk.EventMask.BUTTON_RELEASE_MASK
+            | Gdk.EventMask.POINTER_MOTION_MASK
+        )
         self.do_screen_changed(None, None)
 
     def add_item(self, name_or_MenuItem):
@@ -110,30 +134,40 @@ class PyeMenu(Gtk.Window):
             item = MenuItem(item)
         item.set_index(len(self.items))
         self.items.append(item)
-        self.pye_arc = 2*pi / len(self.items)
-        self.pye_offset = float(self.rotate)*pi/180-self.pye_arc/2
+        self.pye_arc = 2 * pi / len(self.items)
+        self.pye_offset = float(self.rotate) * pi / 180 - self.pye_arc / 2
 
     def canonicalize_colors(self):
-        for col in ["fg", "bg", "border", "hi_fg", "hi_bg", "cancel", "hi_cancel", "accept"]:
+        for col in [
+            "fg",
+            "bg",
+            "border",
+            "hi_fg",
+            "hi_bg",
+            "cancel",
+            "hi_cancel",
+            "accept",
+        ]:
             c = self.__dict__[col]
             if type(c) == str:
-                c1 = ( (int(c[a:a+2], base=16)/255) for a in [1, 3, 5])
+                c1 = ((int(c[a : a + 2], base=16) / 255) for a in [1, 3, 5])
                 self.__dict__[col] = tuple(c1)
-        self.alpha = tuple( (int(self.alpha[a:a+2], base=16)/255) for a in [1, 3, 5, 7])
+        self.alpha = tuple(
+            (int(self.alpha[a : a + 2], base=16) / 255) for a in [1, 3, 5, 7]
+        )
 
     def to_cartesian(self, phi, r):
         """Gives the cartesian coordinate for the passed in angular ones
         (cartesian is centered top-left, angular at the middle)
         """
-        return (self.width/2 + r*cos(phi), self.height/2 + r*sin(phi))
+        return (self.width / 2 + r * cos(phi), self.height / 2 + r * sin(phi))
 
     def to_angular(self, x, y):
         """Gives the angular coordinate (phi, r) for the passed in cartesian
         ones (cartesian is centered top-left, angular at the middle)
         """
-        x, y = x-self.width/2, y-self.height/2
-        return (atan2(y, x) % (2*pi),
-                sqrt(x**2 + y**2))
+        x, y = x - self.width / 2, y - self.height / 2
+        return (atan2(y, x) % (2 * pi), sqrt(x ** 2 + y ** 2))
 
     def do_screen_changed(self, old_screen, user_args=None):
         """This ensures we use the right 'visual' which is stuff like the
@@ -145,8 +179,7 @@ class PyeMenu(Gtk.Window):
         self.set_visual(visual or screen.get_system_visual())
 
     def do_draw(self, context, user_args=None):
-        """This draws the pie menu.
-        """
+        """This draws the pie menu."""
         # First draw background alpha
         if self.supports_alpha:
             context.set_source_rgba(*self.alpha)
@@ -156,7 +189,7 @@ class PyeMenu(Gtk.Window):
         context.paint()
 
         # The background circle
-        context.arc(self.width/2, self.height/2, self.radius, 0, 2*pi)
+        context.arc(self.width / 2, self.height / 2, self.radius, 0, 2 * pi)
         context.set_source_rgb(*self.bg)
         context.fill()
 
@@ -183,8 +216,7 @@ class PyeMenu(Gtk.Window):
         self.compute_selected(phi, r)
         if prev_selected != self.selected:
             self.queue_draw()
-        if self.radius < r and r < self.accept_radius and \
-                self.selected is not None:
+        if self.radius < r and r < self.accept_radius and self.selected is not None:
             self.select_and_quit()
         # Stop propagating the motion
         return True
@@ -193,7 +225,7 @@ class PyeMenu(Gtk.Window):
         if self.cancel_radius < r and r < max(self.radius, self.accept_radius):
             if r < self.radius:
                 angle = phi - self.pye_offset
-                angle = angle % (2*pi)
+                angle = angle % (2 * pi)
                 self.selected = int(angle // self.pye_arc)
             # Else if radius < r < accept-radius, don't change
             # selected. We shouldn't set it to an int, because if the
@@ -227,7 +259,7 @@ class PyeMenu(Gtk.Window):
         xmid, ymid = self.to_cartesian(0, 0)
         context.move_to(xmid, ymid)
         context.line_to(*self.to_cartesian(angle, self.radius))
-        context.arc(xmid, ymid, r, angle, angle+self.pye_arc)
+        context.arc(xmid, ymid, r, angle, angle + self.pye_arc)
 
     def draw_pie(self, context, item, i, angle):
         context.save()
@@ -248,44 +280,48 @@ class PyeMenu(Gtk.Window):
         context.set_source_rgb(*self.border)
         context.stroke()
         context.set_source_rgb(*(self.hi_fg if sel else self.fg))
-        item.add_centred_text(context, self.get_pango_context(),
-                              *self.to_cartesian(angle+self.pye_arc/2,
-                                                 self.radius/2))
+        item.add_centred_text(
+            context,
+            self.get_pango_context(),
+            *self.to_cartesian(angle + self.pye_arc / 2, self.radius / 2)
+        )
         context.restore()
 
     def draw_cancel(self, context):
         # Cancel circle
         sel = self.selected is None
         context.new_path()
-        context.arc(*self.to_cartesian(0, 0)+(self.cancel_radius, 0, 2*pi))
+        context.arc(*self.to_cartesian(0, 0) + (self.cancel_radius, 0, 2 * pi))
         context.set_source_rgb(*(self.hi_cancel if sel else self.cancel))
         context.fill_preserve()
         context.set_source_rgb(*self.border)
         context.stroke()
 
+
 class TopMenu(PyeMenu):
     """Used for the top menu in a multi-menu instance, e.g. in
-          TopMenu(
-            MenuItem("Foo", action=SubMenu(
-                MenuItem("Bar"),
-                MenuItem("Baz"))),
-            MenuItem("Quux"))
+       TopMenu(
+         MenuItem("Foo", action=SubMenu(
+             MenuItem("Bar"),
+             MenuItem("Baz"))),
+         MenuItem("Quux"))
 
-       Has a convenience wrapper method 'main(self)' to replace
-          win = TopMenu(
-                  MenuItem("Foo", action=SubMenu(
-                      MenuItem("Bar"),
-                      MenuItem("Baz"))),
-                  MenuItem("Quux"))
-          win.show_all()
-          Gtk.main()
-       with
-          TopMenu(
-            MenuItem("Foo", action=SubMenu(
-                MenuItem("Bar"),
-                MenuItem("Baz"))),
-            MenuItem("Quux")).main()
+    Has a convenience wrapper method 'main(self)' to replace
+       win = TopMenu(
+               MenuItem("Foo", action=SubMenu(
+                   MenuItem("Bar"),
+                   MenuItem("Baz"))),
+               MenuItem("Quux"))
+       win.show_all()
+       Gtk.main()
+    with
+       TopMenu(
+         MenuItem("Foo", action=SubMenu(
+             MenuItem("Bar"),
+             MenuItem("Baz"))),
+         MenuItem("Quux")).main()
     """
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("action_handler", TopMenu.action_handler)
         super().__init__(*args, **kwargs)
@@ -304,17 +340,19 @@ class TopMenu(PyeMenu):
             self.destroy()
             Gtk.main_quit()
 
+
 class SubMenu(PyeMenu):
     """Used for any of the sub menus in a multi-menu instance, e.g. in
-          TopMenu(
-            MenuItem("Foo", action=SubMenu(
-                MenuItem("Bar"),
-                MenuItem("Baz"))),
-            MenuItem("Quux"))
+       TopMenu(
+         MenuItem("Foo", action=SubMenu(
+             MenuItem("Bar"),
+             MenuItem("Baz"))),
+         MenuItem("Quux"))
 
-       Differs from TopMenu in that if you cancel it, it doesn't quit
-       but goes back to the previous menu.
+    Differs from TopMenu in that if you cancel it, it doesn't quit
+    but goes back to the previous menu.
     """
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("action_handler", SubMenu.action_handler)
         super().__init__(*args, **kwargs)
@@ -322,7 +360,7 @@ class SubMenu(PyeMenu):
     def __call__(self, value):
         self.set_position(Gtk.WindowPosition.MOUSE)
         self.show_all()
-        return self # Don't quit
+        return self  # Don't quit
 
     def action_handler(self, value):
         if isinstance(value, SubMenu):
@@ -331,10 +369,13 @@ class SubMenu(PyeMenu):
             if value is not None:
                 print(value)
             self.hide()
-            if value is not None: # Not cancelling submenu
+            if value is not None:  # Not cancelling submenu
                 self.destroy()
                 Gtk.main_quit()
+
+
 class SubMenuItem(MenuItem):
     """Wrapper for MenuItem(label, action=SubMenu(items))"""
+
     def __init__(self, label, *items, **opts):
         super().__init__(label, action=SubMenu(*items, **opts))
