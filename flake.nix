@@ -61,7 +61,7 @@
 
             propagatedBuildInputs = [
               self.defaultPackage.${system}
-              pkgs.python3.pkgs.pycairo
+              pkgs.python3.pkgs.i3-py
             ];
 
             preConfigure = ''
