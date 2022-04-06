@@ -31,9 +31,8 @@ def main():
     options = {}
     profile = arguments.profile
     for key, ty in [
-        ("width", int),
-        ("height", int),
         ("rotate", int),
+        ("radius", int),
         ("cancel_radius", int),
         ("accept_radius", int),
         ("alpha", str),
@@ -103,15 +102,22 @@ class Arguments:
             help="Rotation, in degrees, of the first item. Default of 0 means first item is to the right.",
         )
         parser.add_argument(
-            "--radius", help="Radius of the selection circle. Default is 200."
+            "--radius", help="Radius (in mm) of the selection circle. Default is 40mm."
         )
         parser.add_argument(
             "--cancel-radius",
-            help="Radius of the central no-selection circle. Should be less than radius. Default is 50.",
+            help="""
+            Radius (in mm) of the central no-selection circle. Should be less
+            than radius. Default is 10mm.
+            """,
         )
         parser.add_argument(
             "--accept-radius",
-            help="Radius of the use current-selection circle, alternative to clicking on a pie-item. Should be greater than radius. Default is radius + 50.",
+            help="""
+            Radius (in mm) of the use current-selection circle, alternative to
+            clicking on a pie-item. Should be greater than radius. Default is
+            radius + 10mm.
+            """,
         )
         parser.add_argument(
             "--alpha",

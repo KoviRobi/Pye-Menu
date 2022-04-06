@@ -25,11 +25,11 @@ if __name__ == '__main__':
                                     ExecMenuItem("Screen", ["@flameshot@", "screen"]),
                                     ExecMenuItem("Full", ["@flameshot@", "full"]),
                                     ExecMenuItem("Select", ["@flameshot@", "gui"]),
-                                    radius=300),
+                                    radius_mm=30),
                         ExecMenuItem("Lock", ["@loginctl@", "lock-session"]),
                         ExecMenuItem("Quit", ["@i3msg@", "quit"]),
-                        radius=300),
-            radius=400).main()
+                        radius_mm=30),
+            radius_mm=40).main()
     finally:
         subprocess.run(["@i3msg@", "--", "unmark", "previous"],
                        stdout=subprocess.DEVNULL)

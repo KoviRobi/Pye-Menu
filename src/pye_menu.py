@@ -75,12 +75,10 @@ class PyeMenu(Gtk.Window):
         self,
         *args,
         action_handler=None,  # default_action_handler
-        width=None,
-        height=None,
         rotate=-90,
-        radius=200,
-        cancel_radius=50,
-        accept_radius=None,
+        radius_mm=40,
+        cancel_radius_mm=10,
+        accept_radius_mm=None,
         alpha="#ffffff00",
         fg="#657b83",
         bg="#fdf6e3",
@@ -95,15 +93,6 @@ class PyeMenu(Gtk.Window):
         keyword_args = {k: v for k, v in locals().items() if k not in ["self", "args"]}
         self.__dict__.update(keyword_args)
         self.canonicalize_colors()
-        if self.action_handler is None:
-            self.action_handler = PyeMenu.default_action_handler
-        if self.accept_radius is None:
-            self.accept_radius = self.radius + 50
-        if self.width is None:
-            self.width = 2 * max(self.radius, self.accept_radius)
-        if self.height is None:
-            self.height = 2 * max(self.radius, self.accept_radius)
-
         self.connect("delete-event", Gtk.main_quit)
         self.connect("destroy", Gtk.main_quit)
 
@@ -112,7 +101,6 @@ class PyeMenu(Gtk.Window):
         for arg in args:
             self.add_item(arg)
 
-        self.set_size_request(self.width, self.height)
         self.set_position(Gtk.WindowPosition.MOUSE)
         self.set_title("Pye Menu")
         self.set_keep_above(True)
@@ -126,6 +114,11 @@ class PyeMenu(Gtk.Window):
             | Gdk.EventMask.BUTTON_RELEASE_MASK
             | Gdk.EventMask.POINTER_MOTION_MASK
         )
+
+        if self.action_handler is None:
+            self.action_handler = PyeMenu.default_action_handler
+        if self.accept_radius_mm is None:
+            self.accept_radius_mm = self.radius_mm + 10
         self.do_screen_changed(None, None)
 
     def add_item(self, name_or_MenuItem):
@@ -177,6 +170,23 @@ class PyeMenu(Gtk.Window):
         visual = screen.get_rgba_visual()
         self.supports_alpha = screen.is_composited()
         self.set_visual(visual or screen.get_system_visual())
+
+        display = screen.get_display()
+        window = self.get_window()
+
+        if window is not None:
+            monitor = display.get_monitor_at_window(self)
+        else:
+            monitor = display.get_monitor(0)
+
+        scale = monitor.get_geometry().width / monitor.get_width_mm()
+        self.radius = self.radius_mm * scale
+        self.accept_radius = self.accept_radius_mm * scale
+        self.cancel_radius = self.cancel_radius_mm * scale
+
+        self.width = 2 * max(self.radius, self.accept_radius)
+        self.height = 2 * max(self.radius, self.accept_radius)
+        self.set_size_request(self.width, self.height)
 
     def do_draw(self, context, user_args=None):
         """This draws the pie menu."""
@@ -258,7 +268,7 @@ class PyeMenu(Gtk.Window):
     def slice_path(self, context, r, angle):
         xmid, ymid = self.to_cartesian(0, 0)
         context.move_to(xmid, ymid)
-        context.line_to(*self.to_cartesian(angle, self.radius))
+        context.line_to(*self.to_cartesian(angle, r))
         context.arc(xmid, ymid, r, angle, angle + self.pye_arc)
 
     def draw_pie(self, context, item, i, angle):
@@ -283,7 +293,10 @@ class PyeMenu(Gtk.Window):
         item.add_centred_text(
             context,
             self.get_pango_context(),
-            *self.to_cartesian(angle + self.pye_arc / 2, self.radius / 2)
+            *self.to_cartesian(
+                angle + self.pye_arc / 2,
+                (self.radius + self.cancel_radius) / 2,
+            )
         )
         context.restore()
 
