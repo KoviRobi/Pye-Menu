@@ -2,16 +2,30 @@
 # This is an example use of PyeMenu, roughly what I use with my touchscreen pen
 import subprocess
 
-import i3
+from i3ipc import Connection, Event
 from pye_menu import ExecMenuItem, MenuItem, SubMenuItem, TopMenu
 
-if __name__ == '__main__':
-    i3.mark("--add", "previous")
+if __name__ == "__main__":
+    i3 = Connection()
+    i3.command("mark --add previous")
+
+    class I3Item(MenuItem):
+        """Executes an i3 action, e.g.
+
+            I3Item("Float", "[con_mark=previous] floating togggle")
+        """
+        def __init__(self, label, command):
+            super().__init__(label, action=I3Item.command)
+            self.command = command
+
+        def command(self):
+            i3.command(self.command)
+
     try:
         TopMenu(
-            MenuItem("Close", action=lambda self: i3.kill(con_mark="previous")),
-            MenuItem("Fullscreen", action=lambda self: i3.fullscreen("toggle", con_mark="previous")),
-            MenuItem("Float", action=lambda self: i3.floating("toggle", con_mark="previous")),
+            I3Item("Close", "[con_mark=previous] kill"),
+            I3Item("Fullscreen", "[con_mark=previous] fullscreen toggle"),
+            I3Item("Float", "[con_mark=previous] floating toggle"),
             SubMenuItem("Music",
                         ExecMenuItem("⏯️", ["@mpc@", "toggle"]),
                         ExecMenuItem("1", ["@mpc@", "single"]),
@@ -26,9 +40,9 @@ if __name__ == '__main__':
                                     ExecMenuItem("Select", ["@flameshot@", "gui"]),
                                     radius_mm=30),
                         ExecMenuItem("Lock", ["@loginctl@", "lock-session"]),
-                        ExecMenuItem("Quit", ["@i3msg@", "quit"]),
+                        I3Item("Quit", "quit"),
                         radius_mm=30),
             radius_mm=40).main()
     finally:
-        i3.unmark("previous")
+        i3.command("unmark previous")
         pass

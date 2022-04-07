@@ -60,8 +60,8 @@
             src = "${self}/examples";
 
             propagatedBuildInputs = [
-              self.defaultPackage.${system}
-              pkgs.python3.pkgs.i3-py
+              self.defaultPackage."${system}"
+              pkgs.python3.pkgs.i3ipc
             ];
 
             preConfigure = ''
