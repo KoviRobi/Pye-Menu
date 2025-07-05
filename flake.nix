@@ -27,6 +27,10 @@
           packages.pye-menu = pkgs.python3.pkgs.buildPythonPackage {
             name = "pye-menu";
             src = ./src;
+
+            pyproject = true;
+            build-system = [ pkgs.python3.pkgs.setuptools ];
+
             propagatedBuildInputs = (with pkgs; [
               python3
               gtk3
@@ -58,6 +62,9 @@
             version = "1.0";
 
             src = ./examples;
+
+            pyproject = true;
+            build-system = [ pkgs.python3.pkgs.setuptools ];
 
             propagatedBuildInputs = [
               self.defaultPackage."${system}"
