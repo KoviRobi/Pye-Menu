@@ -41,7 +41,7 @@
               pycairo
             ]);
             propagatedNativeBuildInputs = with pkgs; [
-              wrapGAppsHook
+              wrapGAppsHook3
               gobject-introspection
             ];
 
@@ -76,7 +76,7 @@
             '';
 
             i3msg = "${pkgs.i3}/bin/i3-msg";
-            mpc = "${pkgs.mpc_cli}/bin/mpc";
+            mpc = "${pkgs.mpc}/bin/mpc";
             loginctl = "${pkgs.systemd}/bin/loginctl";
             flameshot = "${pkgs.flameshot}/bin/flameshot";
 
